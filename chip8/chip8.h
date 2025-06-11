@@ -20,6 +20,8 @@ typedef struct chip8 {
 	uint8_t sound_timer;     // 8-but sound timer
 
 	bool screen[64][32];     // 64x32 monochrome screen
+
+	bool audio_playing;      // is audio currently playing check
 } chip8;
 
 void chip8_init(struct chip8* chip);
@@ -30,6 +32,9 @@ void chip8_load_fonts(struct chip8* chip);
 
 void chip8_cycle(struct chip8* chip);
 
+void check_sound(chip8* chip);
+
+void play_beep();
 
 #endif // !chipheader
 

@@ -10,6 +10,8 @@ void chip8_init(struct chip8* chip) {
 	chip->sound_timer = 0x00;	// 8-bit sound timer, init at 0
 
 	memset(chip->screen, 0, sizeof(chip->screen));	// 64x32 monochrome screen, init all false
+
+	chip->audio_playing = false;
 	
 	memset(chip->memory, 0, sizeof(chip->memory));  // clear memory
 	memset(chip->stack, 0, sizeof(chip->stack));    // clear stack
@@ -44,7 +46,7 @@ void chip8_load_fonts(struct chip8* chip) {
 }
 
 bool chip8_load_rom(chip8* chip, const char* filename) {
-	FILE* rom = fopen(filename, "rb");
+	FILE* rom = fopen("./chip8-roms/programs/IBM Logo.ch8", "rb");
 	if (rom == NULL) {
 		printf("No ROM found at: %s\n", filename);
 		return false;
@@ -88,7 +90,24 @@ void update_timers(struct chip8* chip) {
 
 	// decrement sound timer
 	if (*sound != 0) {
-		// put in logic to beep sound
 		*sound--;
 	}
-}
+
+	check_sound(chip);
+};
+
+void check_sound(chip8* chip) {
+	uint8_t* sound = &chip->sound_timer;
+	if (*sound > 0) {
+		if (!chip->audio_playing) {
+			play_beep();
+		}
+	} else {
+		/*SDL_ClearQueuedAudio(audio_device);*/
+		chip->audio_playing = false;
+	}
+};
+
+void play_beep() {
+
+};
