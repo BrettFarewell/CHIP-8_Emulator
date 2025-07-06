@@ -158,11 +158,38 @@ void fetch(chip8* chip) {
 			break;
 		}
 		case 0xD: { // display vertical line N tall starting at value in VX (x-coord) and VY (y-coord) DXYN
-			uint8_t vx = (0x0f00 & opcode) >> 8;
-			uint8_t vy = (0x00f0 & opcode) >> 4;
-			uint8_t height = 0x000f & opcode;
-			uint8_t x_coord = chip->V[vx];
-			uint8_t y_coord = chip->V[vy];
+			uint8_t vx = (0x0f00 & opcode) >> 8; // find x register
+			uint8_t vy = (0x00f0 & opcode) >> 4; // find y register
+
+			uint8_t height = 0x000f & opcode; // find height
+
+			uint8_t start_x_coord = chip->V[vx] % SCREEN_WIDTH; // fetch starting x coord from x register
+			uint8_t start_y_coord = chip->V[vy] % SCREEN_HEIGHT; // fetch starting y coord from y register
+			
+			chip->V[0xF] = 0; // set VF flag to 0
+
+			for (uint8_t i = 0; i < height; i++) {
+				uint8_t sprite = chip->memory[chip->i + i]; // find sprite in memory
+				uint8_t y_coord = start_y_coord + i; // set y coord to y coord + offset of 0 to height - 1
+				if (y_coord >= SCREEN_HEIGHT) {
+					break;
+				}
+				for (uint8_t j = 0; j < 8; j++) {
+					uint8_t x_coord = start_x_coord + j; // set x coord to x coord + offset of 0 to 7
+					if (x_coord >= SCREEN_WIDTH) {
+						break;
+					}
+					if ((sprite >> (0x7 - j)) & 0x1) { // check to see if bit in sprite is 0x1 or 0x0
+						if (chip->screen[y_coord][x_coord] == true) { // check to see if pixel is true
+							chip->screen[y_coord][x_coord] = false;   // if so, change to false and set VF flag to 0x1
+							chip->V[0xf] = 0x1;
+						}
+						else {
+							chip->screen[y_coord][x_coord] = true;
+						}
+					}
+				}
+			}
 			break;
 		}
 	}
