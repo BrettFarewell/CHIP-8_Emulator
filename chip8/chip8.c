@@ -46,7 +46,7 @@ void chip8_load_fonts(struct chip8* chip) {
 }
 
 bool chip8_load_rom(chip8* chip, const char* filename) {
-	FILE* rom = fopen("./chip8-roms/programs/IBM Logo.ch8", "rb");
+	FILE* rom = fopen("./chip8-roms/programs/IBM Logo.ch8", "rb"); // Hard-coded IBM Logo, CHANGE!!!
 	if (rom == NULL) {
 		printf("No ROM found at: %s\n", filename);
 		return false;
@@ -70,13 +70,19 @@ bool chip8_load_rom(chip8* chip, const char* filename) {
 };
 
 void chip8_cycle(struct chip8* chip) {
-	// fetch, decode, excute -> opcodes
-	// 
-	// update timers -> delay & sound
-	update_timers(chip);
-	// render screen
-	// handle input
-	// emulate 60Hz -> look at CPU cycles
+	while (true) {
+		// fetch, decode, excute -> opcodes
+		fetch(chip);
+
+		// update timers -> delay & sound
+		update_timers(chip);
+
+		// render screen
+		
+		// handle input
+		
+		// emulate 60Hz -> look at CPU cycles
+	}
 };
 
 void update_timers(struct chip8* chip) {
@@ -110,4 +116,57 @@ void check_sound(chip8* chip) {
 
 void play_beep() {
 
+};
+
+void fetch(chip8* chip) {
+	uint16_t opcode = chip->memory[chip->pc] | chip->memory[chip->pc + 1]; // fetch opcode at pc and pc + 1 of memory
+	uint8_t high_bits = opcode & 0xf000; // fetch least significant 4-bits
+	bool do_increment = true;
+	switch (high_bits) {
+		case 0x0: // clear screen
+			switch (opcode) {
+				case 0x00E0: // clear screen
+					memset(chip->screen, 0, sizeof(chip->screen));
+					break;
+				case 0x00EE:  // break 2NNN subroutine
+					chip->pc = chip->stack[chip->sp];
+					chip->sp--;
+					break;
+				default:
+					break;
+			}
+			break;
+		case 0x1: // jump to NNN of opcode (1NNN), do not increment pc
+			chip->pc = 0x0fff & opcode;
+			do_increment = false;
+			break;
+		case 0x6: { // set register VX
+			uint8_t var = (0x0f00 & opcode) >> 8;
+			uint8_t value = 0x00ff & opcode;
+			chip->V[var] = value;
+			break;
+		}
+		case 0x7: { // add value to register VX
+			uint8_t var = (0x0f00 & opcode) >> 8;
+			uint8_t value = 0x00ff & opcode;
+			chip->V[var] += value;
+			break;
+		}
+		case 0xA: { // set index register chip->i
+			uint8_t value = 0x0fff & opcode;
+			chip->i = value;
+			break;
+		}
+		case 0xD: { // display vertical line N tall starting at value in VX (x-coord) and VY (y-coord) DXYN
+			uint8_t vx = (0x0f00 & opcode) >> 8;
+			uint8_t vy = (0x00f0 & opcode) >> 4;
+			uint8_t height = 0x000f & opcode;
+			uint8_t x_coord = chip->V[vx];
+			uint8_t y_coord = chip->V[vy];
+			break;
+		}
+	}
+	if (do_increment) {
+		chip->pc++;
+	}
 };

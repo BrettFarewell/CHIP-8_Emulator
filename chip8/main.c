@@ -3,10 +3,10 @@
 
 int main(int argc, char* argv[]) {
 	// Check to see there is two arguments
-	if (argc != 2) {
+	/*if (argc != 2) {
 		printf("Please supply ROM file: %s <ROM file>\n", argv[0]);
 		return 1;
-	}
+	}*/
 
 	// Declare rom_path as second argument
 	const char* rom_path = argv[1];

@@ -14,7 +14,7 @@ typedef struct chip8 {
 	uint16_t stack[16];      // 16 16-bit stack
 	uint8_t sp;              // stack pointer
 
-	uint8_t V[16];           // 16 8-bit variable registers
+	uint8_t V[16];           // 16 8-bit variable registers 
 
 	uint8_t delay_timer;     // 8-bit delay timer
 	uint8_t sound_timer;     // 8-but sound timer
@@ -32,9 +32,13 @@ void chip8_load_fonts(struct chip8* chip);
 
 void chip8_cycle(struct chip8* chip);
 
+void update_timers(struct chip8* chip);
+
 void check_sound(chip8* chip);
 
 void play_beep();
+
+void fetch(chip8* chip);
 
 #endif // !chipheader
 
