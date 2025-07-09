@@ -42,6 +42,8 @@ void check_sound(chip8* chip);
 
 void play_beep();
 
+void render(chip8* chip);
+
 void execute_opcode(chip8* chip);
 
 #endif // !chipheader

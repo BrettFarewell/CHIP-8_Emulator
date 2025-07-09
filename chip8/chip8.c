@@ -85,6 +85,7 @@ void chip8_cycle(struct chip8* chip) {
 		update_timers(chip);
 
 		// render screen
+		render(chip);
 		
 		// emulate 60Hz -> look at CPU cycles
 		Uint32 current_frame_time = SDL_GetTicks();
@@ -130,17 +131,22 @@ void play_beep() {
 
 };
 
+void render(chip8* chip) {
+
+};
+
 void execute_opcode(chip8* chip) {
 	uint16_t opcode = (chip->memory[chip->pc] << 8) | chip->memory[chip->pc + 1]; // fetch opcode at pc and pc + 1 of memory
 	uint8_t hexit0 = (opcode & 0xf000) >> 12;
 	uint8_t hexit1 = (opcode & 0x0f00) >> 8;
 	uint8_t hexit2 = (opcode & 0x00f0) >> 4;
 	uint8_t hexit3 = (opcode & 0x000f);
-	uint8_t hexit23 = (opcode & 0x00ff);
+	uint8_t byte1 = (opcode & 0x00ff);
+	uint8_t address = (opcode & 0x0fff);
 	bool do_increment = true;
 	switch (hexit0) {
 		case 0x0: // clear screen
-			switch (hexit23) {
+			switch (byte1) {
 				case 0xE0: // clear screen
 					memset(chip->screen, 0, sizeof(chip->screen));
 					break;
@@ -157,15 +163,15 @@ void execute_opcode(chip8* chip) {
 			do_increment = false;
 			break;
 		case 0x6: { // set register VX
-			chip->V[hexit1] = hexit23;
+			chip->V[hexit1] = byte1;
 			break;
 		}
 		case 0x7: { // add value to register VX
-			chip->V[hexit1] += hexit23;
+			chip->V[hexit1] += byte1;
 			break;
 		}
 		case 0xA: { // set index register chip->i
-			chip->i = 0x0fff & opcode;
+			chip->i = address;
 			break;
 		}
 		case 0xD: { // display vertical line N tall starting at value in VX (x-coord) and VY (y-coord) DXYN
