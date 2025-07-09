@@ -7,8 +7,8 @@
 #ifndef chipheader
 #define chipheader
 
-#define SCREEN_WIDTH 64
-#define SCREEN_HEIGHT 32
+#define SCREEN_WIDTH 640
+#define SCREEN_HEIGHT 320
 
 typedef struct chip8 {
 	uint8_t memory[4096];    // 4 kilobytes memory

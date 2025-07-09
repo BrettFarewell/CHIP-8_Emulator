@@ -1,6 +1,6 @@
+#define SDL_MAIN_HANDLED
 #include "chip8.h"
 #include <stdio.h>
-
 
 int main(int argc, char* argv[]) {
 	//The window we'll be rendering to

@@ -1,11 +1,5 @@
 #include "chip8.h"
 
-const int INSTRUCTIONS_PER_FRAME = 10;
-
-//Screen dimension constants
-const int SCREEN_W = 640;
-const int SCREEN_H = 320;
-
 void chip8_init(struct chip8* chip) {
 	chip->pc = 0x200;			// program counter, init at 512
 	chip->i = 0x000;			// index register
@@ -76,6 +70,9 @@ bool chip8_load_rom(chip8* chip, const char* filename) {
 };
 
 void chip8_cycle(struct chip8* chip) {
+	const int INSTRUCTIONS_PER_FRAME = 10;
+	const int FRAMES_DURATION_MS = 1000 / 60;
+	Uint32 last_frame_time = SDL_GetTicks();
 	while (true) {
 		// handle input
 
@@ -90,7 +87,13 @@ void chip8_cycle(struct chip8* chip) {
 		// render screen
 		
 		// emulate 60Hz -> look at CPU cycles
-		SDL_Delay(1000/60);
+		Uint32 current_frame_time = SDL_GetTicks();
+		int elapsed_time = current_frame_time - last_frame_time;
+		int delay = FRAMES_DURATION_MS - elapsed_time;
+		if (delay > 0) {
+			SDL_Delay(delay);
+		}
+		last_frame_time += FRAMES_DURATION_MS;
 	}
 };
 
