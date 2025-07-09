@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <SDL2/SDL.h>
 
 #ifndef chipheader
 #define chipheader
@@ -41,7 +42,7 @@ void check_sound(chip8* chip);
 
 void play_beep();
 
-void fetch(chip8* chip);
+void execute_opcode(chip8* chip);
 
 #endif // !chipheader
 

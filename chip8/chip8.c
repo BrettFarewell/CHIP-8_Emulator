@@ -1,5 +1,11 @@
 #include "chip8.h"
 
+const int INSTRUCTIONS_PER_FRAME = 10;
+
+//Screen dimension constants
+const int SCREEN_W = 640;
+const int SCREEN_H = 320;
+
 void chip8_init(struct chip8* chip) {
 	chip->pc = 0x200;			// program counter, init at 512
 	chip->i = 0x000;			// index register
@@ -71,17 +77,20 @@ bool chip8_load_rom(chip8* chip, const char* filename) {
 
 void chip8_cycle(struct chip8* chip) {
 	while (true) {
-		// fetch, decode, excute -> opcodes
-		fetch(chip);
+		// handle input
+
+		// fetch, decode, excute opcodes
+		for (uint8_t i = 0; i < INSTRUCTIONS_PER_FRAME; i++) {
+			execute_opcode(chip);
+		}
 
 		// update timers -> delay & sound
 		update_timers(chip);
 
 		// render screen
 		
-		// handle input
-		
 		// emulate 60Hz -> look at CPU cycles
+		SDL_Delay(1000/60);
 	}
 };
 
@@ -118,17 +127,21 @@ void play_beep() {
 
 };
 
-void fetch(chip8* chip) {
-	uint16_t opcode = chip->memory[chip->pc] | chip->memory[chip->pc + 1]; // fetch opcode at pc and pc + 1 of memory
-	uint8_t high_bits = opcode & 0xf000; // fetch least significant 4-bits
+void execute_opcode(chip8* chip) {
+	uint16_t opcode = (chip->memory[chip->pc] << 8) | chip->memory[chip->pc + 1]; // fetch opcode at pc and pc + 1 of memory
+	uint8_t hexit0 = (opcode & 0xf000) >> 12;
+	uint8_t hexit1 = (opcode & 0x0f00) >> 8;
+	uint8_t hexit2 = (opcode & 0x00f0) >> 4;
+	uint8_t hexit3 = (opcode & 0x000f);
+	uint8_t hexit23 = (opcode & 0x00ff);
 	bool do_increment = true;
-	switch (high_bits) {
+	switch (hexit0) {
 		case 0x0: // clear screen
-			switch (opcode) {
-				case 0x00E0: // clear screen
+			switch (hexit23) {
+				case 0xE0: // clear screen
 					memset(chip->screen, 0, sizeof(chip->screen));
 					break;
-				case 0x00EE:  // break 2NNN subroutine
+				case 0xEE:  // break 2NNN subroutine
 					chip->pc = chip->stack[chip->sp];
 					chip->sp--;
 					break;
@@ -141,34 +154,24 @@ void fetch(chip8* chip) {
 			do_increment = false;
 			break;
 		case 0x6: { // set register VX
-			uint8_t var = (0x0f00 & opcode) >> 8;
-			uint8_t value = 0x00ff & opcode;
-			chip->V[var] = value;
+			chip->V[hexit1] = hexit23;
 			break;
 		}
 		case 0x7: { // add value to register VX
-			uint8_t var = (0x0f00 & opcode) >> 8;
-			uint8_t value = 0x00ff & opcode;
-			chip->V[var] += value;
+			chip->V[hexit1] += hexit23;
 			break;
 		}
 		case 0xA: { // set index register chip->i
-			uint8_t value = 0x0fff & opcode;
-			chip->i = value;
+			chip->i = 0x0fff & opcode;
 			break;
 		}
 		case 0xD: { // display vertical line N tall starting at value in VX (x-coord) and VY (y-coord) DXYN
-			uint8_t vx = (0x0f00 & opcode) >> 8; // find x register
-			uint8_t vy = (0x00f0 & opcode) >> 4; // find y register
-
-			uint8_t height = 0x000f & opcode; // find height
-
-			uint8_t start_x_coord = chip->V[vx] % SCREEN_WIDTH; // fetch starting x coord from x register
-			uint8_t start_y_coord = chip->V[vy] % SCREEN_HEIGHT; // fetch starting y coord from y register
+			uint8_t start_x_coord = chip->V[hexit1] % SCREEN_WIDTH; // fetch starting x coord from x register
+			uint8_t start_y_coord = chip->V[hexit2] % SCREEN_HEIGHT; // fetch starting y coord from y register
 			
 			chip->V[0xF] = 0; // set VF flag to 0
 
-			for (uint8_t i = 0; i < height; i++) {
+			for (uint8_t i = 0; i < hexit3; i++) {
 				uint8_t sprite = chip->memory[chip->i + i]; // find sprite in memory
 				uint8_t y_coord = start_y_coord + i; // set y coord to y coord + offset of 0 to height - 1
 				if (y_coord >= SCREEN_HEIGHT) {
@@ -192,8 +195,10 @@ void fetch(chip8* chip) {
 			}
 			break;
 		}
+		default:
+			break;
 	}
 	if (do_increment) {
-		chip->pc++;
+		chip->pc += 2;
 	}
 };
